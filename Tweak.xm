@@ -57,14 +57,16 @@ static NSString *stringForObject(id object, NSString *prefix, BOOL dontTruncate)
 		NSArray *array = (NSArray *) object;
 		str = @"[";
 		for (id val in array) {
-			str = Xstr(@"%@\n%@\t%@", str, prefix, stringForObject(val, Xstr(@"%@\t", prefix), dontTruncate));
+            NSString* recursiveFucked = Xstr(@"%@\t", prefix);
+			str = Xstr(@"%@\n%@\t%@", str, prefix, stringForObject(val, recursiveFucked, dontTruncate));
 		}
 		str = Xstr(@"%@\n%@]", str, prefix);
 	} else if ([object isKindOfClass:NSDictionary.class]) {
 		NSDictionary *dict = (NSDictionary *) object;
 		str = @"{";
 		for (id key in dict.allKeys) {
-			str = Xstr(@"%@\n%@\t%@: %@", str, prefix, key, stringForObject(dict[key], Xstr(@"%@\t", prefix), dontTruncate));
+            NSString* recursiveFucked = Xstr(@"%@\t", prefix);
+			str = Xstr(@"%@\n%@\t%@: %@", str, prefix, key, stringForObject(dict[key], recursiveFucked, dontTruncate));
 		}
 		str = Xstr(@"%@\n%@}", str, prefix);
 	} else if ([object isKindOfClass:NSData.class]) {
@@ -710,7 +712,7 @@ static NSString *prefsSayNo(BBServer *server, BBBulletin *bulletin) {
 		return;
 	}
 
-	NSString *title = Xstr(@"%@%@", appName, (bulletin.title && bulletin.title.length > 0 ? Xstr(@": %@", bulletin.title) : @""));
+	NSString *title = Xstr(@"%@%@", appName, (bulletin.title && bulletin.title.length > 0 ? [NSString stringWithFormat:@": %@", bulletin.title] : @""));
 	NSString *message = @"";
 	if (bulletin.showsSubtitle && bulletin.subtitle && bulletin.subtitle.length > 0) {
 		message = bulletin.subtitle;
