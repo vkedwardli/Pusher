@@ -911,11 +911,10 @@ static NSString *prefsSayNo(BBServer *server, BBBulletin *bulletin) {
                                 //Takes 0.5 second on iPhone 5s to decrypt the image, let's wait for 2 seconds?
                                 int retries = 20;
                                 for(int i = 0; i < retries; i++){
-                                    NSLog(@"Fuck: WhatsApp! time=%f fileExistsAtPath:%d, %@", i*0.1, [[NSFileManager defaultManager] fileExistsAtPath:path], path);
-                                    [NSThread sleepForTimeInterval:0.1];
                                     if ([[NSFileManager defaultManager] fileExistsAtPath:path]){
                                         break;
                                     }
+                                    [NSThread sleepForTimeInterval:0.1];
                                 }
                                 UIImage* highresImage = [UIImage imageWithContentsOfFile:path];
                                 
