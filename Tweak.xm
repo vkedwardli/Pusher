@@ -1089,7 +1089,7 @@ static NSString *prefsSayNo(BBServer *server, BBBulletin *bulletin) {
             
                 for( NSData* data in @[
                     [Xstr(@"--%@\r\n",boundary) dataUsingEncoding:NSUTF8StringEncoding],
-                    [Xstr(@"Content-Disposition: form-data; name=\"attachment\"; filename=\"file.jpg\"\r\n") dataUsingEncoding:NSUTF8StringEncoding],
+                    [Xstr(@"Content-Disposition: form-data; name=\"attachment\"; filename=\"file.%@\"\r\n", containsAlpha ? @"png" : @"jpg") dataUsingEncoding:NSUTF8StringEncoding],
                     [Xstr(@"Content-Type: image/%@\r\n\r\n", containsAlpha ? @"png" : @"jpeg") dataUsingEncoding:NSUTF8StringEncoding]
                 ] ){
                     [body appendData:data];
