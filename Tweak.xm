@@ -4,6 +4,7 @@
 #import <SystemConfiguration/CaptiveNetwork.h>
 #import <notify.h>
 #import "iOSVersion.m"
+#import <JavaScriptCore/JavaScriptCore.h>
 // #import <MetalKit/MTKTextureLoader.h>
 
 #define isBundle(z) [[[NSBundle mainBundle] bundleIdentifier] isEqualToString:z]
@@ -833,6 +834,23 @@ static NSString *prefsSayNo(BBServer *server, BBBulletin *bulletin) {
 		@"imageMaxHeight": imageMaxHeight,
 		@"imageShrinkFactor": imageShrinkFactor
 	}];
+    
+    if ( Xeq(infoDict[@"appID"], @"com.apple.MobileSMS") ) {
+        JSContext *context = [[JSContext alloc] init];
+        [context evaluateScript:@"function filtering(t){return t.startsWith('SCBHK: Your One-Time Password')?t.replace('SCBHK:','渣打:').replace('Please use it to log into Online/Mobile Securities Service. Enq: 28866266.',''):!!(t.startsWith('SCBHK: You successfully logged into')||t.startsWith('SCBHK: You failed to log into')||t.startsWith('SCBHK: Sell')||t.startsWith('SCBHK: Buy')||t.startsWith('SCBHK:')&&t.includes('Dividend with Option'))&&t.replace('SCBHK:','渣打:')}"];
+        JSValue *result = [context evaluateScript:Xstr(@"filtering('%@')", [infoDict[@"message"] stringByReplacingOccurrencesOfString:@"'"
+        withString:@"\'"])];
+        
+        if ([result toBool] == false) {
+            return ;
+        } else {
+            NSMutableDictionary* mutableInfoDict = [infoDict mutableCopy];
+            mutableInfoDict[@"message"] = [result toString];
+            infoDict = [NSDictionary dictionaryWithDictionary:mutableInfoDict];
+        }
+    }
+    
+    
 	NSDictionary *credentials = [self getPusherCredentialsForService:service withDictionary:@{
 		@"token": servicePrefs[@"token"] ?: @"",
 		@"user": servicePrefs[@"user"] ?: @"",
