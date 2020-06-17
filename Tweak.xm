@@ -28,6 +28,21 @@
 + (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bundleIdentifier format:(int)format;
 @end
 
+@interface UIImage (Alpha)
+- (BOOL)hasAlpha;
+@end
+@implementation UIImage (Alpha)
+
+// Returns true if the image has an alpha layer
+- (BOOL)hasAlpha {
+    CGImageAlphaInfo alpha = CGImageGetAlphaInfo(self.CGImage);
+    return (alpha == kCGImageAlphaFirst ||
+            alpha == kCGImageAlphaLast ||
+            alpha == kCGImageAlphaPremultipliedFirst ||
+            alpha == kCGImageAlphaPremultipliedLast);
+}
+@end
+
 static BOOL pusherEnabled = NO;
 static int pusherWhenToPush = PUSHER_WHEN_TO_PUSH_EITHER;
 static NSArray *pusherSNS = nil;
@@ -265,8 +280,8 @@ static NSString *base64RepresentationForImage(UIImage *image) {
 }
 
 static UIImage *shrinkImage(UIImage *image, CGFloat factor) {
-	CGSize newSize = CGSizeMake(image.size.width / factor, image.size.height / factor);
-	UIGraphicsBeginImageContext(newSize);
+    CGSize newSize = CGSizeMake(image.size.width / factor, image.size.height / factor);
+	UIGraphicsBeginImageContextWithOptions(newSize, !image.hasAlpha, 1.0);
 	[image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
 	UIImage *smallImage = UIGraphicsGetImageFromCurrentImageContext();
 	UIGraphicsEndImageContext();
@@ -1083,21 +1098,18 @@ static NSString *prefsSayNo(BBServer *server, BBBulletin *bulletin) {
             if (infoDictForRequest[@"image"] && [infoDictForRequest[@"image"] isKindOfClass:UIImage.class]) {
                 
                 UIImage* image = (UIImage*)infoDictForRequest[@"image"];
-                
-                CGImageAlphaInfo alpha = CGImageGetAlphaInfo(image.CGImage);
-                BOOL containsAlpha = (alpha == kCGImageAlphaFirst || alpha == kCGImageAlphaLast || alpha == kCGImageAlphaPremultipliedFirst || alpha == kCGImageAlphaPremultipliedLast);
             
                 for( NSData* data in @[
                     [Xstr(@"--%@\r\n",boundary) dataUsingEncoding:NSUTF8StringEncoding],
-                    [Xstr(@"Content-Disposition: form-data; name=\"attachment\"; filename=\"file.%@\"\r\n", containsAlpha ? @"png" : @"jpg") dataUsingEncoding:NSUTF8StringEncoding],
-                    [Xstr(@"Content-Type: image/%@\r\n\r\n", containsAlpha ? @"png" : @"jpeg") dataUsingEncoding:NSUTF8StringEncoding]
+                    [Xstr(@"Content-Disposition: form-data; name=\"attachment\"; filename=\"file.%@\"\r\n", image.hasAlpha ? @"png" : @"jpg") dataUsingEncoding:NSUTF8StringEncoding],
+                    [Xstr(@"Content-Type: image/%@\r\n\r\n", image.hasAlpha ? @"png" : @"jpeg") dataUsingEncoding:NSUTF8StringEncoding]
                 ] ){
                     [body appendData:data];
                     [bodyForLog appendData:data];
                 }
             
                 
-                if ( containsAlpha ) {
+                if ( image.hasAlpha ) {
                     [body appendData:UIImagePNGRepresentation(image)];
                 }else{
                     [body appendData:UIImageJPEGRepresentation(image, 1.0)];
