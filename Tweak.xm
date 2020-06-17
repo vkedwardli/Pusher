@@ -1081,18 +1081,27 @@ static NSString *prefsSayNo(BBServer *server, BBBulletin *bulletin) {
             NSMutableData *bodyForLog = [body mutableCopy];
             
             if (infoDictForRequest[@"image"] && [infoDictForRequest[@"image"] isKindOfClass:UIImage.class]) {
+                
+                UIImage* image = (UIImage*)infoDictForRequest[@"image"];
+                
+                CGImageAlphaInfo alpha = CGImageGetAlphaInfo(image.CGImage);
+                BOOL containsAlpha = (alpha == kCGImageAlphaFirst || alpha == kCGImageAlphaLast || alpha == kCGImageAlphaPremultipliedFirst || alpha == kCGImageAlphaPremultipliedLast);
             
                 for( NSData* data in @[
                     [Xstr(@"--%@\r\n",boundary) dataUsingEncoding:NSUTF8StringEncoding],
                     [Xstr(@"Content-Disposition: form-data; name=\"attachment\"; filename=\"file.jpg\"\r\n") dataUsingEncoding:NSUTF8StringEncoding],
-                    [Xstr(@"Content-Type: image/jpeg\r\n\r\n") dataUsingEncoding:NSUTF8StringEncoding]
+                    [Xstr(@"Content-Type: image/%@\r\n\r\n", containsAlpha ? @"png" : @"jpeg") dataUsingEncoding:NSUTF8StringEncoding]
                 ] ){
                     [body appendData:data];
                     [bodyForLog appendData:data];
                 }
             
                 
-                [body appendData:UIImageJPEGRepresentation(infoDictForRequest[@"image"], 1.0)];
+                if ( containsAlpha ) {
+                    [body appendData:UIImagePNGRepresentation(image)];
+                }else{
+                    [body appendData:UIImageJPEGRepresentation(image, 1.0)];
+                }
                 [bodyForLog appendData:[PUSHER_LOG_IMAGE_DATA_REPLACEMENT dataUsingEncoding:NSUTF8StringEncoding]];
                 
                 
